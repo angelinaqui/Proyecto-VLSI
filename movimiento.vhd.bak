@@ -1,0 +1,57 @@
+library ieee; 
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity movimiento is 
+    port(
+        clk, pi, pf, rst: in std_logic;
+        ancho: out integer
+    );
+end entity;
+
+architecture arqmov of movimiento is
+    signal valor: integer range 0 to 200 := 75;
+    signal counter: integer range 0 to 50000 := 0;  -- Contador para generar el retardo
+    signal enable: std_logic := '0';  -- Señal de habilitación para controlar el incremento/decremento
+    signal direccion: std_logic := '1'; -- Señal para controlar la dirección: '1' para incrementar, '0' para decrementar
+begin
+    process (clk, rst)
+    begin
+        if rst = '1' then
+            valor <= 75;
+            counter <= 0;
+            enable <= '0';
+            direccion <= '1'; -- Inicialmente configurado para incrementar
+        elsif rising_edge(clk) then
+            if counter = 500 then  -- valor a modificar para cambiar la vel
+                enable <= '1';
+                counter <= 0;
+            else
+                counter <= counter + 1;
+                enable <= '0';
+            end if;
+
+            if enable = '1' then
+                if pi = '1' then
+                    valor <= 55;  -- 5.5% -~1 ms
+                    direccion <= '1'; -- Cambia dirección a incrementar
+                elsif pf = '1' then 
+                    valor <= 95;  -- 9.5% -~2ms
+                    direccion <= '0'; -- Cambia dirección a decrementar
+                elsif direccion = '1' and valor < 95 then
+                    valor <= valor + 1;
+                    if valor = 94 then
+                        direccion <= '0'; -- Cambia dirección a decrementar
+                    end if;
+                elsif direccion = '0' and valor > 55 then
+                    valor <= valor - 1;
+                    if valor = 56 then
+                        direccion <= '1'; -- Cambia dirección a incrementar
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process;
+
+    ancho <= valor; -- Asignación continua de `ancho` al valor calculado
+end architecture;
